@@ -17,6 +17,8 @@ public class WikipediaCrawler {
 
     private static final String WIKIKPEDIA_BASE = "https://en.wikipedia.org";
 
+    private static final int MAX_HOPS = 100;
+
     public static Path getPath(String startUrl) throws IOException{
 
         HashSet<String> locationsSet = new HashSet<>();
@@ -29,11 +31,17 @@ public class WikipediaCrawler {
         locationsList.add(firstHeading);
         locationsSet.add(firstHeading);
 
-        while(!firstHeading.equals(PHILOSOPHY_HEADING)) {
+        // keep track of number of hops
+        int hops = 0;
+
+        while(!firstHeading.equals(PHILOSOPHY_HEADING) && (hops < MAX_HOPS)) {
             String firstLink = findFirstLink(doc);
 
             doc = Jsoup.connect(WIKIKPEDIA_BASE + firstLink).get();
             firstHeading = doc.select("#firstHeading").html();
+
+            hops ++;
+
             if(!locationsSet.contains(firstHeading)){
                 locationsList.add(firstHeading);
                 locationsSet.add(firstHeading);
