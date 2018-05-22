@@ -24,13 +24,12 @@ public class WikipediaCrawler {
 
         Document doc = Jsoup.connect(startUrl).get();
         String firstHeading = doc.select("#firstHeading").html();
+
+        // list of headings of articles visited and set to quickly check for loops
         locationsList.add(firstHeading);
         locationsSet.add(firstHeading);
 
         while(!firstHeading.equals(PHILOSOPHY_HEADING)) {
-            System.out.println(doc.title());
-            System.out.println(doc.location());
-
             String firstLink = findFirstLink(doc);
 
             doc = Jsoup.connect(WIKIKPEDIA_BASE + firstLink).get();
@@ -39,14 +38,9 @@ public class WikipediaCrawler {
                 locationsList.add(firstHeading);
                 locationsSet.add(firstHeading);
             } else {
-                System.out.println("LOOOOP");
+                System.out.println("Found loop");
                 break;
             }
-        }
-
-
-        for(String location : locationsList){
-            System.out.println(location);
         }
 
         boolean foundPhilosophy = false;
@@ -60,7 +54,7 @@ public class WikipediaCrawler {
     private static String findFirstLink(Document doc){
         String firstLink = "";
 
-
+        // remove elements that do not contain the first valid link
         ArrayList<String> removeSelectors = new ArrayList<>();
         removeSelectors.add(".navbox");
         removeSelectors.add(".vertical-navbox");
@@ -71,31 +65,25 @@ public class WikipediaCrawler {
         removeSelectors.add("sup");
         removeSelectors.add("small");
 
-
         for(String removeSelector : removeSelectors) {
             doc.select(removeSelector).remove();
         }
 
-        Elements firstParagraph = doc.select(".mw-parser-output p");
+        Elements paragraphs = doc.select(".mw-parser-output p");
 
-
-        String firstParagraphText = firstParagraph.html();
-
-        Pattern linkPattern = Pattern.compile("(<a href.*?=.*?\"(\\S+?)\".+?title.*?=.*?\"(.*?)\")");
+        String paragraphsHtml = paragraphs.html();
 
         // remove all parenthesized and italics links
-        firstParagraphText = firstParagraphText.replaceAll("\\([^\\)]*?(?:<a.*?a>)+.*?\\)","");
-        firstParagraphText = firstParagraphText.replaceAll("\\[[^\\]]*?(?:<a.+?a>)+.*?\\]","");
-        firstParagraphText = firstParagraphText.replaceAll("<i>[^\\/i]*?(?:<a.+?a>)+.*?<\\/i>","");
+        paragraphsHtml = paragraphsHtml.replaceAll("\\([^\\)]*?(?:<a.*?a>)+.*?\\)","");
+        paragraphsHtml = paragraphsHtml.replaceAll("\\[[^\\]]*?(?:<a.+?a>)+.*?\\]","");
+        paragraphsHtml = paragraphsHtml.replaceAll("<i>[^\\/i]*?(?:<a.+?a>)+.*?<\\/i>","");
 
-        Matcher linkMatcher = linkPattern.matcher(firstParagraphText);
+        // regex to find link with href and title
+        Pattern linkPattern = Pattern.compile("(<a href.*?=.*?\"(\\S+?)\".+?title.*?=.*?\"(.*?)\")");
+        Matcher linkMatcher = linkPattern.matcher(paragraphsHtml);
+
         if(linkMatcher.find()){
-            /*System.out.println(linkMatcher.groupCount());
-            System.out.println(linkMatcher.group(2));
-            System.out.println(linkMatcher.group(3));*/
-
             firstLink = linkMatcher.group(2);
-
         }
 
         return firstLink;

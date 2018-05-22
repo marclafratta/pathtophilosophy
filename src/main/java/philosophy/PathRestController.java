@@ -14,11 +14,12 @@ public class PathRestController {
 
     @RequestMapping("/findPath")
     public Path findPath(@RequestParam(value = "startUrl") String startUrl) {
-        System.out.println(startUrl);
+
         Path foundPath;
         try {
             foundPath = WikipediaCrawler.getPath(startUrl);
         } catch (Exception e){
+            // send empty path if exception
             e.printStackTrace();
             foundPath = new Path(new ArrayList<String>(), false);
         }
